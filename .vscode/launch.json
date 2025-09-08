@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "API: Fastify dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "./apps/api", "dev"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "pwa-chrome",
+      "request": "launch",
+      "name": "Web: Vite dev",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/apps/web",
+      "preLaunchTask": "web:dev"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Web + API",
+      "configurations": ["API: Fastify dev", "Web: Vite dev"],
+      "stopAll": true
+    }
+  ]
+}

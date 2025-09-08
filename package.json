@@ -1,0 +1,25 @@
+{
+  "name": "munch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "ci:install": "pnpm install --frozen-lockfile",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "typecheck": "tsc -b"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {}
+}
