@@ -1,17 +1,5 @@
 {
   "name": "munch",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "ci:install": "pnpm install --frozen-lockfile",
-    "lint": "eslint .",
-    "format": "prettier --check .",
-    "typecheck": "tsc -b"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "private": true,
   "packageManager": "pnpm@9.0.0",
   "engines": {
@@ -21,5 +9,36 @@
     "apps/*",
     "packages/*"
   ],
-  "overrides": {}
+  "scripts": {
+    "ci:install": "pnpm install --frozen-lockfile",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "typecheck": "tsc -b",
+    "dedupe": "pnpm dedupe --check",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "psql -d munch_dev -f db/seeds/0001_seed_core.sql",
+    "db:reset": "dropdb --if-exists munch_dev && createdb munch_dev && pnpm db:migrate && pnpm db:seed",
+    "dev:api": "pnpm --filter ./apps/api dev",
+    "dev:web": "pnpm --filter ./apps/web dev",
+    "dev": "concurrently -n api,web -c yellow,cyan \"pnpm dev:api\" \"pnpm dev:web\"",
+    "build:api": "pnpm --filter ./apps/api build",
+    "build:web": "pnpm --filter ./apps/web build",
+    "build": "pnpm build:api && pnpm build:web",
+    "preview:web": "pnpm --filter ./apps/web preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "audit": "osv-scanner --skip-git -r .",
+    "clean": "rm -rf node_modules **/node_modules && pnpm store prune"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "tsx": "^4.20.5",
+    "typescript": "~5.8.3"
+  },
+  "overrides": {},
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "pg": "^8.16.3"
+  }
 }

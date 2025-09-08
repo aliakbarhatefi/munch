@@ -1,52 +1,28 @@
 /**
  * Fastify API entrypoint
- * - Loads .env from apps/api/.env
- * - Provides /health, /debug/env, /v1/restaurants
+ * Loads environment variables from repo root .env
  */
 
 import Fastify from 'fastify'
 import dotenv from 'dotenv'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-// Force override so shell/root vars don't win
-dotenv.config({ path: join(__dirname, '../.env'), override: true })
+// Load environment variables from root .env
+dotenv.config()
 
 import { query } from './db.js'
+import { getDealsToday } from './deals-today.js'
 
 const app = Fastify({
-  logger: { level: 'info', transport: { target: 'pino-pretty' } } as any,
+  logger: true, // pretty logging if pino-pretty is installed
 })
 
-// --- Health check ---
+// Health check
 app.get('/health', async () => ({ ok: true }))
 
-// --- Debug route (TEMP: remove once DB works) ---
-app.get('/debug/env', async () => {
-  const url = process.env.DATABASE_URL || ''
-  return {
-    hasUrl: !!url,
-    urlPrefix: url.slice(0, 30) + (url.length > 30 ? '...' : ''),
-    port: process.env.PORT || null,
-    nodeEnv: process.env.NODE_ENV || null,
-  }
-})
-
-// --- List restaurants ---
-/**
- * GET /v1/restaurants
- * Query params:
- * - city=Milton
- * - cuisine=Pizza,Indian
- * - bbox=south,west,north,east
- * - limit=50
- */
-app.get('/v1/restaurants', async (req, reply) => {
+// Restaurants listing
+app.get('/v1/restaurants', async (req) => {
   const q: any = req.query
   const limit = Math.min(parseInt(q.limit ?? '50', 10), 100)
-
   const conds: string[] = []
   const params: any[] = []
 
@@ -54,7 +30,6 @@ app.get('/v1/restaurants', async (req, reply) => {
     params.push(q.city)
     conds.push(`city = $${params.length}`)
   }
-
   if (q.cuisine) {
     const tags = String(q.cuisine)
       .split(',')
@@ -65,14 +40,12 @@ app.get('/v1/restaurants', async (req, reply) => {
       conds.push(`cuisine_tags && $${params.length}::text[]`)
     }
   }
-
   if (q.bbox) {
     const [s, w, n, e] = String(q.bbox).split(',').map(Number)
     if ([s, w, n, e].every(Number.isFinite)) {
       params.push(s, n, w, e)
       conds.push(
-        `lat >= $${params.length - 3} AND lat <= $${params.length - 2} 
-         AND lng >= $${params.length - 1} AND lng <= $${params.length}`
+        `lat >= $${params.length - 3} AND lat <= $${params.length - 2} AND lng >= $${params.length - 1} AND lng <= $${params.length}`
       )
     }
   }
@@ -91,8 +64,14 @@ app.get('/v1/restaurants', async (req, reply) => {
   return { items: rows }
 })
 
-// --- Start server ---
+// Deals Today
+app.get('/v1/deals/today', async (req) => {
+  const rows = await getDealsToday((req as any).query)
+  return { items: rows }
+})
+
+// Start server
 const port = Number(process.env.PORT || 4000)
 app.listen({ port, host: '0.0.0.0' }).then(() => {
-  console.log(`api listening on http://localhost:${port}`)
+  console.log(`API listening on http://localhost:${port}`)
 })
