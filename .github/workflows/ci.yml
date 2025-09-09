@@ -25,16 +25,21 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
-      # 🔑 Install pnpm on PATH (must be BEFORE any pnpm command)
+      # Install pnpm and add it to PATH
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - name: Show tool versions (sanity check)
+      # Verify pnpm; if not found, install via npm as fallback
+      - name: Verify pnpm (with fallback)
         run: |
-          node -v
-          pnpm -v
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found after action-setup; installing via npm fallback..."
+            npm i -g pnpm@9
+          fi
+          echo "Node: $(node -v)"
+          echo "pnpm: $(pnpm -v)"
 
       - name: Install deps
         run: pnpm install --frozen-lockfile
@@ -50,7 +55,7 @@ jobs:
 
   osv-scan:
     name: OSV Vulnerability Scan
-    # OSV v2 is a reusable workflow; do NOT call as an "action"
+    # OSV v2 is a reusable workflow (not a traditional action)
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.2
     with:
       scan-args: |-
