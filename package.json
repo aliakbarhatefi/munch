@@ -17,7 +17,7 @@
     "typecheck": "tsc -b",
     "dedupe": "pnpm dedupe --check",
     "db:migrate": "dotenv -e .env -- tsx scripts/migrate.ts",
-    "db:seed": "dotenv -e .env -- psql \"$DATABASE_URL\" -f db/seeds/0001_seed_core.sql",
+    "db:seed": "PGPASSWORD=munch psql -h 127.0.0.1 -U munch -d munch_dev -f db/seeds/0001_seed_core.sql",
     "db:reset": "dotenv -e .env -- bash -lc 'set -euo pipefail; URL=\"$DATABASE_URL\"; DB=\"${URL##*/}\"; DB=\"${DB%%\\?*}\"; USERNAME=\"$(printf %s \"$URL\" | sed -E \"s|^[a-z]+://([^:@/]+).*|\\1|\")\"; ADMIN_URL=\"${URL%/*}/postgres\"; psql \"$ADMIN_URL\" -v ON_ERROR_STOP=1 -c \"DROP DATABASE IF EXISTS \\\"$DB\\\" WITH (FORCE);\"; psql \"$ADMIN_URL\" -v ON_ERROR_STOP=1 -c \"CREATE DATABASE \\\"$DB\\\" OWNER \\\"$USERNAME\\\";\"; pnpm db:migrate && pnpm db:seed'",
     "dev:api": "pnpm --filter ./apps/api dev",
     "dev:web": "pnpm --filter ./apps/web dev",
@@ -32,16 +32,19 @@
     "clean": "rm -rf node_modules **/node_modules && pnpm store prune"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^24.3.1",
     "concurrently": "^9.1.0",
-    "dotenv-cli": "^7.4.2",
+    "dotenv-cli": "^7.4.4",
     "eslint": "^9.14.0",
+    "postcss": "^8.5.6",
     "prettier": "^3.3.3",
     "tsx": "^4.20.5",
     "typescript": "~5.8.3",
     "vitest": "^2.1.4"
   },
   "dependencies": {
+    "@googlemaps/markerclusterer": "^2.6.2",
     "dotenv": "^17.2.2",
     "pg": "^8.16.3"
   },

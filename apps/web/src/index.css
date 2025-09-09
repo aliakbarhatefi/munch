@@ -1,8 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-/* Ensure full height for app */
+/* Optional globals */
 html,
 body,
 #root {
@@ -10,12 +8,9 @@ body,
   margin: 0;
   padding: 0;
 }
-
-/* Smooth fonts */
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply text-slate-900 bg-slate-50;
   font-family:
     'Inter',
     system-ui,
@@ -29,7 +24,7 @@ body {
     sans-serif;
 }
 
-/* Optional helpers */
+/* Helper classes (keep if you use them) */
 .glass {
   @apply bg-white/70 backdrop-blur rounded-2xl shadow-sm;
 }
