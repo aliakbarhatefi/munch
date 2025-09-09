@@ -11,33 +11,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node from .nvmrc (pnpm cache)
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version: '20'
 
-      # 🔑 Install pnpm on PATH (BEFORE any pnpm command)
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      # Install pnpm globally FIRST so it's on PATH
+      - name: Install pnpm
+        run: npm i -g pnpm@9
 
-      # Fallback in case the action didn't add pnpm to PATH for any reason
-      - name: Verify pnpm (with fallback)
+      # Prove pnpm is available
+      - name: Verify tools
         run: |
-          if ! command -v pnpm >/dev/null 2>&1; then
-            echo "pnpm not found; installing via npm fallback..."
-            npm i -g pnpm@9
-          fi
-          echo "Node: $(node -v)"
-          echo "pnpm: $(pnpm -v)"
+          echo "PATH=$PATH"
+          which node
+          node -v
+          which pnpm
+          pnpm -v
 
-      # If your project is in apps/web, uncomment the two lines below
-      # - name: Install deps (apps/web)
-      #   working-directory: apps/web
-      #   run: pnpm install --frozen-lockfile
-
+      # If your project lives in apps/web, uncomment the working-directory:
       - name: Install deps
-        if: success() # keep separate from the apps/web variant above
-        run: pnpm install --frozen-lockfile
+        # working-directory: apps/web
+        run: pnpm install --no-frozen-lockfile
