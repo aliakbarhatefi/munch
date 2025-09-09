@@ -1,21 +1,13 @@
 name: CI
-
-on:
-  push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node from .nvmrc (with pnpm cache)
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -26,16 +18,14 @@ jobs:
       - name: Install deps
         run: pnpm install --frozen-lockfile
 
-      - name: Check duplicates
+      - name: Dedupe check
         run: pnpm dedupe --check
 
-      # OPTIONAL: uncomment if you have a build script
-      # - name: Build
-      #   run: |
-      #     if [ -d "apps/web" ]; then cd apps/web; fi
-      #     pnpm run build
-
       - name: OSV dependency scan
-        uses: google/osv-scanner-action@v2
+        uses: google/osv-scanner-action@v2.2.2
         with:
-          scan-args: -r .
+          # Include HEAD if you have no lockfiles; see action release notes
+          scan-args: |
+            --recursive
+            ./
+            --include-git-root
