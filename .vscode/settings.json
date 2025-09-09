@@ -2,5 +2,27 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.eol": "\n",
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+
+  // Tell VS Code to parse .css with Tailwind’s language service
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+
+  // Silence the unknown @rule from the vanilla CSS validator
+  "css.lint.unknownAtRules": "ignore",
+
+  // Monorepo hint: point Tailwind to the web app root (so IntelliSense works)
+  "tailwindCSS.root": "apps/web",
+  // If detection still fails, uncomment the next line:
+  // "tailwindCSS.experimental.configFile": ["apps/web/tailwind.config.js"],
+
+  // Nice-to-haves
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.includeLanguages": {
+    "html": "html",
+    "javascript": "javascript",
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact"
+  }
 }

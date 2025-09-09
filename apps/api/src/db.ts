@@ -1,41 +1,31 @@
-// apps/api/src/db.ts
-import { Pool, QueryResultRow } from 'pg'
+import { Pool } from 'pg'
 
 let pool: Pool | null = null
 
 /**
- * Lazily initializes the connection pool.
- * Ensures dotenv has already run in index.ts before first use.
+ * Lazily create or return the shared PG Pool.
+ * Must be called *after* dotenv.config() has loaded DATABASE_URL.
  */
-function getPool(): Pool {
-  if (!pool) {
-    const url = process.env.DATABASE_URL
-    if (!url) {
-      throw new Error(
-        'DATABASE_URL is missing. Make sure apps/api/.env is set and dotenv.config() runs in index.ts'
-      )
-    }
-    pool = new Pool({ connectionString: url })
-  }
-  return pool
-}
+export function getPool(): Pool {
+  if (pool) return pool
 
-/**
- * Query helper — safely connects, runs, and releases.
- *
- * @param text SQL string with placeholders ($1, $2, …)
- * @param params Optional parameter array
- * @returns rows typed as T[]
- */
-export async function query<T extends QueryResultRow = any>(
-  text: string,
-  params?: any[]
-): Promise<{ rows: T[] }> {
-  const client = await getPool().connect()
-  try {
-    const res = await client.query<T>(text, params)
-    return { rows: res.rows }
-  } finally {
-    client.release()
+  const url = process.env.DATABASE_URL
+  if (!url) {
+    throw new Error('DATABASE_URL missing. Define it in apps/api/.env')
   }
+
+  pool = new Pool({
+    connectionString: url,
+    // Optional: tune these for dev vs prod
+    max: 10, // number of connections in pool
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 5_000,
+  })
+
+  pool.on('error', (err) => {
+    console.error('Unexpected PG client error', err)
+    process.exit(-1)
+  })
+
+  return pool
 }

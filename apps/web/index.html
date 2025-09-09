@@ -11,14 +11,31 @@
       content="Discover today’s restaurant pickup deals near you with Munch."
     />
 
-    <!-- ✅ Leaflet CSS (needed for map + icons) -->
+    <!-- ✅ Modern font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ❌ Leaflet CSS removed (not needed for Google Maps) -->
+    <!-- If you stay on Leaflet temporarily, uncomment:
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       crossorigin=""
     />
+    -->
+
+    <!-- ✅ Optional: dark mode favicon support -->
+    <link rel="icon" href="/vite.svg" media="(prefers-color-scheme: light)" />
+    <link
+      rel="icon"
+      href="/vite-dark.svg"
+      media="(prefers-color-scheme: dark)"
+    />
   </head>
-  <body class="bg-slate-50">
+  <body class="bg-slate-50 font-sans">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
