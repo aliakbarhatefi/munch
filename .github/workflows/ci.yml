@@ -19,17 +19,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node from .nvmrc (with cache)
+      - name: Setup Node from .nvmrc (with pnpm cache)
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
-      # Install pnpm explicitly (avoids "Unable to locate executable file: pnpm")
+      # 🔑 Install pnpm on PATH (must be BEFORE any pnpm command)
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
+
+      - name: Show tool versions (sanity check)
+        run: |
+          node -v
+          pnpm -v
 
       - name: Install deps
         run: pnpm install --frozen-lockfile
@@ -45,7 +50,7 @@ jobs:
 
   osv-scan:
     name: OSV Vulnerability Scan
-    # OSV v2 is a reusable workflow, not a "runs:" action
+    # OSV v2 is a reusable workflow; do NOT call as an "action"
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.2
     with:
       scan-args: |-
