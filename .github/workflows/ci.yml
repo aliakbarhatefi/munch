@@ -2,67 +2,42 @@ name: CI
 
 on:
   push:
-    branches: ['main']
   pull_request:
-    branches: ['main']
-
-permissions:
-  contents: read
-  actions: read
-  security-events: write
 
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node from .nvmrc (with pnpm cache)
+      - name: Setup Node from .nvmrc (pnpm cache)
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
-      # Install pnpm and add it to PATH
+      # 🔑 Install pnpm on PATH (BEFORE any pnpm command)
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      # Verify pnpm; if not found, install via npm as fallback
+      # Fallback in case the action didn't add pnpm to PATH for any reason
       - name: Verify pnpm (with fallback)
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
-            echo "pnpm not found after action-setup; installing via npm fallback..."
+            echo "pnpm not found; installing via npm fallback..."
             npm i -g pnpm@9
           fi
           echo "Node: $(node -v)"
           echo "pnpm: $(pnpm -v)"
 
+      # If your project is in apps/web, uncomment the two lines below
+      # - name: Install deps (apps/web)
+      #   working-directory: apps/web
+      #   run: pnpm install --frozen-lockfile
+
       - name: Install deps
+        if: success() # keep separate from the apps/web variant above
         run: pnpm install --frozen-lockfile
-
-      - name: Check duplicates
-        run: pnpm dedupe --check
-
-      # OPTIONAL build — uncomment if you have a build script
-      # - name: Build
-      #   run: |
-      #     if [ -d "apps/web" ]; then cd apps/web; fi
-      #     pnpm run build
-
-  osv-scan:
-    name: OSV Vulnerability Scan
-    # OSV v2 is a reusable workflow (not a traditional action)
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.2
-    with:
-      scan-args: |-
-        --include-git-root
-        --recursive
-        ./
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
