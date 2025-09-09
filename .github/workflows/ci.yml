@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: ['main']
 
-# Minimal permissions; OSV scan needs security-events: write to upload SARIF
 permissions:
   contents: read
   actions: read
@@ -20,14 +19,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node from .nvmrc (pnpm cache)
+      - name: Setup Node from .nvmrc (with cache)
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
-      - name: Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.0.0 --activate
+      # Install pnpm explicitly (avoids "Unable to locate executable file: pnpm")
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Install deps
         run: pnpm install --frozen-lockfile
@@ -35,7 +37,7 @@ jobs:
       - name: Check duplicates
         run: pnpm dedupe --check
 
-      # Optional build — uncomment if you have a build script
+      # OPTIONAL build — uncomment if you have a build script
       # - name: Build
       #   run: |
       #     if [ -d "apps/web" ]; then cd apps/web; fi
@@ -43,10 +45,9 @@ jobs:
 
   osv-scan:
     name: OSV Vulnerability Scan
-    # Runs the official reusable workflow (v2.x)
+    # OSV v2 is a reusable workflow, not a "runs:" action
     uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.2.2
     with:
-      # Recommended flags; include repo root + recurse
       scan-args: |-
         --include-git-root
         --recursive
