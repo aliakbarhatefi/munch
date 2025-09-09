@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Munch — Today’s Deals</title>
@@ -11,29 +10,23 @@
       content="Discover today’s restaurant pickup deals near you with Munch."
     />
 
-    <!-- ✅ Modern font -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+    <!-- Modern font -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
       rel="stylesheet"
     />
 
-    <!-- ❌ Leaflet CSS removed (not needed for Google Maps) -->
-    <!-- If you stay on Leaflet temporarily, uncomment:
+    <!-- If still using Leaflet, uncomment:
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      crossorigin=""
+      crossorigin="anonymous"
     />
     -->
-
-    <!-- ✅ Optional: dark mode favicon support -->
-    <link rel="icon" href="/vite.svg" media="(prefers-color-scheme: light)" />
-    <link
-      rel="icon"
-      href="/vite-dark.svg"
-      media="(prefers-color-scheme: dark)"
-    />
   </head>
   <body class="bg-slate-50 font-sans">
     <div id="root"></div>

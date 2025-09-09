@@ -1,6 +1,2 @@
-// apps/web/postcss.config.js
-export default {
-  plugins: {
-    '@tailwindcss/postcss': {},
-  },
-}
+// Tailwind v4 uses @tailwindcss/postcss as the plugin
+export default { plugins: { '@tailwindcss/postcss': {} } }
