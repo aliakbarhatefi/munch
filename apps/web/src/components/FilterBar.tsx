@@ -1,59 +1,90 @@
-import { useId } from 'react'
-import type { Filters } from '../types'
+import { useEffect, useState } from 'react'
+
+export type Filters = {
+  city?: string
+  cuisine?: string[]
+  price?: '' | '$' | '$$' | '$$$'
+  openNow?: boolean
+}
 
 export default function FilterBar({
   value,
   onChange,
 }: {
   value: Filters
-  onChange: (next: Filters) => void
+  onChange: (v: Filters) => void
 }) {
-  const cityId = useId()
-  const cuisineId = useId()
+  const [local, setLocal] = useState<Filters>(value)
 
-  const cuisineStr = (value.cuisine ?? []).join(', ')
+  useEffect(() => setLocal(value), [value])
+
+  // Debounce updates to avoid spamming the API
+  useEffect(() => {
+    const t = setTimeout(() => onChange(local), 300)
+    return () => clearTimeout(t)
+  }, [local, onChange])
 
   return (
-    <div className="glass p-3 flex gap-3 items-end flex-wrap">
-      <div className="flex-1 min-w-[220px]">
-        <label
-          htmlFor={cityId}
-          className="block text-xs font-medium text-slate-600 mb-1"
-        >
-          City
-        </label>
+    <form className="mx-auto max-w-6xl px-4 py-2 flex flex-wrap gap-2 items-center">
+      <label className="text-sm text-slate-600">
+        <span className="sr-only">City</span>
         <input
-          id={cityId}
-          value={value.city ?? ''}
-          onChange={(e) =>
-            onChange({ ...value, city: e.target.value || undefined })
-          }
-          placeholder="Milton or Toronto"
-          className="w-full px-3 py-2 rounded-xl border border-slate-300"
+          className="px-3 py-2 rounded-xl border"
+          placeholder="City"
+          value={local.city ?? ''}
+          onChange={(e) => setLocal((v) => ({ ...v, city: e.target.value }))}
         />
-      </div>
+      </label>
 
-      <div className="flex-1 min-w-[260px]">
-        <label
-          htmlFor={cuisineId}
-          className="block text-xs font-medium text-slate-600 mb-1"
-        >
-          Cuisine (comma separated)
-        </label>
+      <label className="text-sm text-slate-600">
+        <span className="sr-only">Cuisine</span>
         <input
-          id={cuisineId}
-          value={cuisineStr}
-          onChange={(e) => {
-            const arr = e.target.value
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
-            onChange({ ...value, cuisine: arr.length ? arr : undefined })
-          }}
-          placeholder="Pizza, Indian, Wings"
-          className="w-full px-3 py-2 rounded-xl border border-slate-300"
+          className="px-3 py-2 rounded-xl border min-w-[220px]"
+          placeholder="Cuisine (comma separated)"
+          onChange={(e) =>
+            setLocal((v) => ({
+              ...v,
+              cuisine: e.target.value
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean),
+            }))
+          }
         />
-      </div>
-    </div>
+      </label>
+
+      <select
+        className="px-3 py-2 rounded-xl border"
+        value={local.price ?? ''}
+        onChange={(e) =>
+          setLocal((v) => ({ ...v, price: e.target.value as Filters['price'] }))
+        }
+        aria-label="Price"
+      >
+        <option value="">Any price</option>
+        <option value="$">$</option>
+        <option value="$$">$$</option>
+        <option value="$$$">$$$</option>
+      </select>
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={!!local.openNow}
+          onChange={(e) =>
+            setLocal((v) => ({ ...v, openNow: e.target.checked }))
+          }
+        />
+        Open now
+      </label>
+
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={() => setLocal({})}
+      >
+        Clear
+      </button>
+    </form>
   )
 }

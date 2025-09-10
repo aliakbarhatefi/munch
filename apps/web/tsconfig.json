@@ -9,19 +9,19 @@
     "strict": true,
     "noImplicitAny": true,
     "noFallthroughCasesInSwitch": true,
+    "useDefineForClassFields": true,
 
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "useDefineForClassFields": true,
 
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
 
-    "types": ["vite/client", "react", "react-dom", "react-leaflet"]
+    "types": ["vite/client"]
   },
-  "include": ["src", "vite-env.d.ts"]
+  "include": ["src", "vite-env.d.ts", "src/types/**/*.d.ts"]
 }

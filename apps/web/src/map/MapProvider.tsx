@@ -1,19 +1,28 @@
-import type { ReactNode } from 'react'
-import { useJsApiLoader } from '@react-google-maps/api'
-import type { Library } from '@googlemaps/js-api-loader'
-import { MapApiContext } from './context'
+import { useMemo, useRef } from 'react'
+import { Ctx, type MapCtx } from './context'
 
-const GOOGLE_LIBRARIES: Library[] = ['places']
+export default function MapProvider({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const mapRef = useRef<google.maps.Map | null>(null)
 
-export function MapProvider({ children }: { children: ReactNode }) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: GOOGLE_LIBRARIES,
-  })
-  return (
-    <MapApiContext.Provider value={{ isLoaded, loadError }}>
-      {children}
-    </MapApiContext.Provider>
+  const value = useMemo<MapCtx>(
+    () => ({
+      getMap: () => mapRef.current,
+      setMap: (m) => {
+        mapRef.current = m
+      },
+      panTo: (lat, lng) => {
+        const m = mapRef.current
+        if (!m) return
+        m.panTo({ lat, lng })
+        m.setZoom(Math.max(m.getZoom() ?? 12, 12))
+      },
+    }),
+    []
   )
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

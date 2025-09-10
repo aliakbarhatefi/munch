@@ -1,7 +1,3 @@
-// src/map/useMapApi.ts
-import { useContext } from 'react'
-import { MapApiContext } from './context'
-
-export function useMapApi() {
-  return useContext(MapApiContext)
-}
+// Wrapper for backwards compatibility.
+// Any imports of "@/map/useMapApi" will now use the shared loader.
+export { useGoogleMaps, GOOGLE_LIBRARIES } from './google'

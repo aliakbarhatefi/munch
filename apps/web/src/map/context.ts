@@ -1,11 +1,15 @@
-// src/map/context.ts
-import { createContext } from 'react'
+import { createContext, useContext } from 'react'
 
-export type MapApiContextValue = {
-  isLoaded: boolean
-  loadError?: Error
+export type MapCtx = {
+  getMap: () => google.maps.Map | null
+  setMap: (m: google.maps.Map | null) => void
+  panTo: (lat: number, lng: number) => void
 }
 
-export const MapApiContext = createContext<MapApiContextValue>({
-  isLoaded: false,
-})
+export const Ctx = createContext<MapCtx | null>(null)
+
+export function useMapCtx() {
+  const ctx = useContext(Ctx)
+  if (!ctx) throw new Error('useMapCtx must be used inside <MapProvider>')
+  return ctx
+}

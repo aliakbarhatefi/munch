@@ -1,79 +1,44 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api'
-import type { DealToday, BBox } from '../types'
-import { useMapApi } from '../map/useMapApi'
+import { useCallback, useMemo, useRef } from 'react'
+import { GoogleMap, Marker } from '@react-google-maps/api'
+import type { DealToday } from '@/types'
+import { useGoogleMaps } from '@/map/google'
+import { darkMapStyle } from '@/map/styles'
+import { useMapCtx } from '@/map/context'
 
-const DEFAULT_CENTER = { lat: 43.65, lng: -79.38 }
-const CONTAINER_STYLE = { height: '65vh', width: '100%' } as const
-
-const MAP_OPTIONS: google.maps.MapOptions = {
-  mapTypeControl: false,
-  streetViewControl: false,
-  fullscreenControl: false,
-  gestureHandling: 'greedy',
-  clickableIcons: false,
-}
-
-// Pan to user's location + drop a blue dot
-const locateMe = (
-  map: google.maps.Map | null,
-  setUserPos: (pos: google.maps.LatLngLiteral | null) => void
-) => {
-  if (!map || !navigator.geolocation) return
-  navigator.geolocation.getCurrentPosition((pos) => {
-    const { latitude, longitude } = pos.coords
-    const where = new google.maps.LatLng(latitude, longitude)
-    map.panTo(where)
-    map.setZoom(14)
-    setUserPos({ lat: latitude, lng: longitude })
-  })
-}
-
-// requestAnimationFrame throttle (typed)
-function useRafThrottle<T extends (...args: unknown[]) => void>(fn: T): T {
-  const ticking = useRef(false)
-  return ((...args: Parameters<T>) => {
-    if (ticking.current) return
-    ticking.current = true
-    requestAnimationFrame(() => {
-      ticking.current = false
-      fn(...args)
-    })
-  }) as T
-}
-
-type Props = {
-  deals: DealToday[]
-  onBoundsChange: (bbox: BBox) => void
-  onSelect?: (id: number | null) => void
-  selectedId?: number | null
-}
+export type BBox = { south: number; west: number; north: number; east: number }
 
 export default function MapView({
   deals,
-  onBoundsChange,
-  onSelect,
   selectedId,
-}: Props) {
-  const { isLoaded, loadError } = useMapApi()
-
+  onSelect,
+  onBoundsChange,
+}: {
+  deals: DealToday[]
+  selectedId?: number
+  onSelect?: (id: number) => void
+  onBoundsChange: (bbox: BBox) => void
+}) {
   const mapRef = useRef<google.maps.Map | null>(null)
-  const [userPos, setUserPos] = useState<google.maps.LatLngLiteral | null>(null)
-  const initialisedCenter = useRef(false)
+  const { setMap } = useMapCtx()
 
-  const selected = useMemo(
-    () =>
-      selectedId != null ? deals.find((d) => d.deal_id === selectedId) : null,
-    [deals, selectedId]
+  // ✅ load maps via shared loader
+  const { isLoaded, loadError } = useGoogleMaps()
+
+  // Default center → use first deal or fallback (Toronto)
+  const center = useMemo<[number, number]>(() => {
+    if (deals.length) return [deals[0].lat, deals[0].lng]
+    return [43.6532, -79.3832]
+  }, [deals])
+
+  const onLoad = useCallback(
+    (map: google.maps.Map) => {
+      mapRef.current = map
+      setMap(map) // share globally via context
+    },
+    [setMap]
   )
 
-  const initialCenter = useMemo(
-    () =>
-      deals.length ? { lat: deals[0].lat, lng: deals[0].lng } : DEFAULT_CENTER,
-    [deals]
-  )
-
-  const emitBounds = useCallback(() => {
+  const handleIdle = useCallback(() => {
     const map = mapRef.current
     if (!map) return
     const b = map.getBounds()
@@ -88,99 +53,46 @@ export default function MapView({
     })
   }, [onBoundsChange])
 
-  const onMapLoad = useCallback(
-    (map: google.maps.Map) => {
-      mapRef.current = map
-      if (!initialisedCenter.current) {
-        initialisedCenter.current = true
-        map.setCenter(initialCenter)
-        map.setZoom(13)
-      }
-      google.maps.event.addListenerOnce(map, 'idle', () => {
-        emitBounds()
-      })
-    },
-    [initialCenter, emitBounds]
-  )
-
-  const onUnmount = useCallback(() => {
-    mapRef.current = null
-    initialisedCenter.current = false
-  }, [])
-
-  const onIdle = useRafThrottle(() => {
-    emitBounds()
-  })
-
-  if (loadError)
-    return <div className="card text-red-600">Failed to load Google Maps</div>
-  if (!isLoaded) return <div className="card">Loading map…</div>
+  if (loadError) {
+    return (
+      <div className="h-[70vh] w-full card text-red-600">
+        Failed to load Google Maps.
+      </div>
+    )
+  }
+  if (!isLoaded) {
+    return <div className="h-[70vh] w-full card">Loading map…</div>
+  }
 
   return (
-    <div
-      className="relative w-full rounded-2xl overflow-hidden shadow"
-      style={{ height: CONTAINER_STYLE.height }}
-    >
-      <button
-        onClick={() => locateMe(mapRef.current, setUserPos)}
-        className="btn btn-secondary absolute z-[1] m-3 top-2 left-2"
-      >
-        Locate me
-      </button>
-
+    <div className="h-[70vh] w-full rounded-2xl overflow-hidden shadow">
       <GoogleMap
-        onLoad={onMapLoad}
-        onUnmount={onUnmount}
-        onIdle={onIdle}
-        mapContainerStyle={{ height: '100%', width: '100%' }}
-        options={MAP_OPTIONS}
+        onLoad={onLoad}
+        onIdle={handleIdle}
+        center={{ lat: center[0], lng: center[1] }}
+        zoom={13}
+        mapContainerClassName="h-full w-full"
+        options={{
+          styles: darkMapStyle, // high-contrast theme
+          clickableIcons: false,
+          fullscreenControl: false,
+          streetViewControl: false,
+          mapTypeControl: false,
+        }}
       >
         {deals.map((d) => (
           <Marker
             key={d.deal_id}
             position={{ lat: d.lat, lng: d.lng }}
             onClick={() => onSelect?.(d.deal_id)}
-            opacity={selectedId != null && d.deal_id !== selectedId ? 0.7 : 1}
+            zIndex={d.deal_id === selectedId ? 999 : undefined}
+            label={
+              d.deal_id === selectedId
+                ? { text: '★', color: 'white', fontSize: '14px' }
+                : undefined
+            }
           />
         ))}
-
-        {selected && (
-          <InfoWindow
-            position={{ lat: selected.lat, lng: selected.lng }}
-            onCloseClick={() => onSelect?.(null)}
-          >
-            <div className="text-sm">
-              <b>{selected.name}</b>
-              <br />
-              {selected.title}
-              <br />
-              <span className="opacity-70">
-                {selected.discount_type === 'PERCENT'
-                  ? `${selected.discount_value}% off`
-                  : selected.discount_type === 'FIXED'
-                    ? `$${selected.discount_value}`
-                    : selected.discount_type}
-              </span>
-              <div className="opacity-70">
-                {selected.start_time}–{selected.end_time}
-              </div>
-            </div>
-          </InfoWindow>
-        )}
-
-        {userPos && (
-          <Marker
-            position={userPos}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: '#4285F4',
-              fillOpacity: 1,
-              strokeWeight: 2,
-              strokeColor: 'white',
-            }}
-          />
-        )}
       </GoogleMap>
     </div>
   )

@@ -1,86 +1,133 @@
 import { useEffect, useMemo, useState } from 'react'
-import FilterBar from './components/FilterBar'
-import MapView from './components/MapView'
-import DealList from './components/DealList'
-import { useDebounced } from './hooks/useDebounced'
-import type { BBox, DealToday, Filters } from './types'
 
-const API = 'http://localhost:4000'
+import AppShell from '@/components/AppShell'
+import Header from '@/components/Header'
+import FilterBar, { type Filters } from '@/components/FilterBar'
+import BottomSheet from '@/components/BottomSheet'
+import DealList from '@/components/DealList'
+import FloatingControls from '@/components/FloatingControls'
+import MapView, { type BBox } from '@/components/MapView'
+import PlaceAutocomplete from '@/components/PlaceAutocomplete'
 
-export default function App() {
+import type { DealToday } from '@/types'
+
+import MapProvider from '@/map/MapProvider'
+import { useMapCtx } from '@/map/context'
+
+// You can set this in .env (Vite) as VITE_API_URL
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
+
+function AppInner() {
   const [filters, setFilters] = useState<Filters>({ city: 'Milton' })
   const [bbox, setBbox] = useState<BBox | null>(null)
-  const [deals, setDeals] = useState<DealToday[]>([])
+
+  const [items, setItems] = useState<DealToday[]>([])
+  const [selectedId, setSelectedId] = useState<number>()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(true)
 
-  // Debounce filters so typing doesn't spam the API
-  const debouncedFilters = useDebounced(filters, 300)
+  const { panTo } = useMapCtx()
 
-  const queryString = useMemo(() => {
-    const p = new URLSearchParams()
-    p.set('now', new Date().toISOString())
-    if (debouncedFilters.city) p.set('city', debouncedFilters.city)
-    if (debouncedFilters.cuisine?.length)
-      p.set('cuisine', debouncedFilters.cuisine.join(','))
+  // Build query string from filters + bbox
+  const qs = useMemo(() => {
+    const u = new URLSearchParams()
+    u.set('now', new Date().toISOString())
+    if (filters.city) u.set('city', filters.city)
+    if (filters.cuisine?.length) u.set('cuisine', filters.cuisine.join(','))
+    if (filters.price) u.set('price', filters.price)
     if (bbox)
-      p.set('bbox', `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`)
-    return p.toString()
-  }, [debouncedFilters, bbox])
+      u.set('bbox', `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`)
+    if (filters.openNow) u.set('openNow', '1')
+    return u.toString()
+  }, [filters, bbox])
 
-  // Effect 1: fetch data when query changes
+  // Fetch deals whenever qs changes
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
 
-    fetch(`${API}/v1/deals/today?${queryString}`)
+    fetch(`${API}/v1/deals/today?${qs}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
-      .then((data) => {
-        if (cancelled) return
-        const items: DealToday[] = data?.items ?? []
-        setDeals(items)
+      .then((d) => {
+        if (!cancelled) setItems(d.items ?? [])
       })
-      .catch((e) => !cancelled && setError(e.message || 'Failed to load deals'))
-      .finally(() => !cancelled && setLoading(false))
+      .catch((e) => {
+        if (!cancelled) setError(e.message ?? 'Failed to load')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
 
     return () => {
       cancelled = true
     }
-  }, [queryString])
+  }, [qs])
 
-  // Effect 2: clear selection if the selected deal is no longer in results
-  useEffect(() => {
-    if (selectedId && !deals.some((x) => x.deal_id === selectedId)) {
-      setSelectedId(null)
-    }
-  }, [selectedId, deals])
+  const header = (
+    <Header>
+      <PlaceAutocomplete
+        className="px-3 py-2 rounded-xl border w-full"
+        placeholder="Search by place or address…"
+        onPlace={({ lat, lng }) => {
+          panTo(lat, lng) // pan the map
+          setSheetOpen(true) // show sheet
+        }}
+      />
+    </Header>
+  )
+
+  const filtersBar = <FilterBar value={filters} onChange={setFilters} />
+
+  const map = (
+    <div className="relative">
+      <MapView
+        deals={items}
+        selectedId={selectedId}
+        onSelect={(id) => {
+          setSelectedId(id)
+          setSheetOpen(true)
+        }}
+        onBoundsChange={setBbox}
+      />
+      <FloatingControls
+        onLocate={() => {
+          if (!navigator.geolocation) return
+          navigator.geolocation.getCurrentPosition((pos) => {
+            panTo(pos.coords.latitude, pos.coords.longitude)
+            setSheetOpen(true)
+          })
+        }}
+        onOpenFilters={() => setSheetOpen(true)}
+      />
+    </div>
+  )
+
+  const sheet = (
+    <BottomSheet
+      open={sheetOpen}
+      onClose={() => setSheetOpen(false)}
+      title="Today’s Deals"
+    >
+      <DealList
+        items={items}
+        loading={loading}
+        error={error}
+        onSelect={(d) => setSelectedId(d.deal_id)}
+      />
+    </BottomSheet>
+  )
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto p-4 space-y-4">
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Munch — Today’s Deals</h1>
-        </header>
+    <AppShell header={header} filters={filtersBar} map={map} sheet={sheet} />
+  )
+}
 
-        <FilterBar value={filters} onChange={setFilters} />
-
-        <MapView
-          deals={deals}
-          onBoundsChange={(b) => setBbox(b)}
-          onSelect={(id) => setSelectedId(id)}
-          selectedId={selectedId}
-        />
-
-        <DealList
-          deals={deals}
-          loading={loading}
-          error={error}
-          selectedId={selectedId}
-          onSelect={(id) => setSelectedId(id)}
-        />
-      </div>
-    </div>
+export default function App() {
+  return (
+    <MapProvider>
+      <AppInner />
+    </MapProvider>
   )
 }
