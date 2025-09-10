@@ -2,34 +2,43 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
 
     <title>Munch — Today’s Deals</title>
     <meta
       name="description"
       content="Discover today’s restaurant pickup deals near you with Munch."
     />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="color-scheme" content="light dark" />
 
-    <!-- Favicon -->
+    <!-- Favicons (replace with your own when ready) -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Modern font -->
+    <!-- Inter font -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
       rel="stylesheet"
     />
 
-    <!-- If still using Leaflet, uncomment:
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      crossorigin="anonymous"
+    <!-- (Optional) Social cards -->
+    <meta property="og:title" content="Munch — Today’s Deals" />
+    <meta
+      property="og:description"
+      content="Discover today’s restaurant pickup deals near you."
     />
-    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og.png" />
   </head>
   <body class="bg-slate-50 font-sans">
     <div id="root"></div>
+    <noscript>You need JavaScript enabled to run Munch.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

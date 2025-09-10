@@ -10,13 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "^1.16.10",
-    "@vis.gl/react-google-maps": "^1.5.5",
+    "@googlemaps/js-api-loader": "1.16.8",
+    "@react-google-maps/api": "^2.20.7",
     "axios": "^1.11.0",
-    "leaflet": "^1.9.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-leaflet": "^4.2.1",
     "react-router-dom": "^7.8.2",
     "zustand": "^5.0.8"
   },
@@ -25,7 +23,6 @@
     "@tailwindcss/cli": "^4.1.13",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/google.maps": "^3.58.1",
-    "@types/leaflet": "^1.9.20",
     "@types/node": "^24.3.1",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
@@ -41,5 +38,8 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
+  },
+  "overrides": {
+    "@googlemaps/js-api-loader": "1.16.8"
   }
 }
