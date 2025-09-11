@@ -1,31 +1,26 @@
-import { Pool } from 'pg'
+// apps/api/src/db.ts
+import { Pool, QueryResultRow } from 'pg'
+import dotenv from 'dotenv'
 
-let pool: Pool | null = null
+dotenv.config()
+
+// Create a connection pool for Postgres
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // ssl: { rejectUnauthorized: false } // uncomment if you need SSL (e.g., cloud DBs)
+})
 
 /**
- * Lazily create or return the shared PG Pool.
- * Must be called *after* dotenv.config() has loaded DATABASE_URL.
+ * Run a SQL query safely with parameter binding.
+ * T is constrained to pg's QueryResultRow to satisfy type requirements.
+ * @param text SQL query string with $1..$n placeholders
+ * @param params Array of parameters
+ * @returns Rows from the query result
  */
-export function getPool(): Pool {
-  if (pool) return pool
-
-  const url = process.env.DATABASE_URL
-  if (!url) {
-    throw new Error('DATABASE_URL missing. Define it in apps/api/.env')
-  }
-
-  pool = new Pool({
-    connectionString: url,
-    // Optional: tune these for dev vs prod
-    max: 10, // number of connections in pool
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
-  })
-
-  pool.on('error', (err) => {
-    console.error('Unexpected PG client error', err)
-    process.exit(-1)
-  })
-
-  return pool
+export async function query<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: any[]
+): Promise<{ rows: T[] }> {
+  const res = await pool.query<T>(text, params)
+  return { rows: res.rows }
 }

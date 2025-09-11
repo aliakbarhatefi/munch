@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 
 export type Filters = {
   city?: string
   cuisine?: string[]
-  price?: '' | '$' | '$$' | '$$$'
-  openNow?: boolean
 }
 
 export default function FilterBar({
@@ -12,79 +10,52 @@ export default function FilterBar({
   onChange,
 }: {
   value: Filters
-  onChange: (v: Filters) => void
+  onChange: (f: Filters) => void
 }) {
-  const [local, setLocal] = useState<Filters>(value)
+  const [city, setCity] = useState(value.city ?? '')
+  const [cuisine, setCuisine] = useState((value.cuisine ?? []).join(', '))
 
-  useEffect(() => setLocal(value), [value])
+  const cityId = useId()
+  const cuisineId = useId()
 
-  // Debounce updates to avoid spamming the API
   useEffect(() => {
-    const t = setTimeout(() => onChange(local), 300)
-    return () => clearTimeout(t)
-  }, [local, onChange])
+    const arr = cuisineToArray(cuisine)
+    onChange({ city: city || undefined, cuisine: arr })
+  }, [city, cuisine, onChange])
 
   return (
-    <form className="mx-auto max-w-6xl px-4 py-2 flex flex-wrap gap-2 items-center">
-      <label className="text-sm text-slate-600">
-        <span className="sr-only">City</span>
+    <div className="glass p-3 sticky top-2 z-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+        <label htmlFor={cityId} className="text-sm font-medium">
+          City
+        </label>
         <input
-          className="px-3 py-2 rounded-xl border"
-          placeholder="City"
-          value={local.city ?? ''}
-          onChange={(e) => setLocal((v) => ({ ...v, city: e.target.value }))}
+          id={cityId}
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          placeholder="Milton or Toronto"
+          className="px-3 py-2 rounded border md:col-span-2"
         />
-      </label>
 
-      <label className="text-sm text-slate-600">
-        <span className="sr-only">Cuisine</span>
+        <label htmlFor={cuisineId} className="text-sm font-medium">
+          Cuisine
+        </label>
         <input
-          className="px-3 py-2 rounded-xl border min-w-[220px]"
-          placeholder="Cuisine (comma separated)"
-          onChange={(e) =>
-            setLocal((v) => ({
-              ...v,
-              cuisine: e.target.value
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean),
-            }))
-          }
+          id={cuisineId}
+          value={cuisine}
+          onChange={(e) => setCuisine(e.target.value)}
+          placeholder="Pizza, Indian, Sushi"
+          className="px-3 py-2 rounded border md:col-span-2"
         />
-      </label>
-
-      <select
-        className="px-3 py-2 rounded-xl border"
-        value={local.price ?? ''}
-        onChange={(e) =>
-          setLocal((v) => ({ ...v, price: e.target.value as Filters['price'] }))
-        }
-        aria-label="Price"
-      >
-        <option value="">Any price</option>
-        <option value="$">$</option>
-        <option value="$$">$$</option>
-        <option value="$$$">$$$</option>
-      </select>
-
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={!!local.openNow}
-          onChange={(e) =>
-            setLocal((v) => ({ ...v, openNow: e.target.checked }))
-          }
-        />
-        Open now
-      </label>
-
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={() => setLocal({})}
-      >
-        Clear
-      </button>
-    </form>
+      </div>
+    </div>
   )
+}
+
+function cuisineToArray(s: string): string[] | undefined {
+  const arr = s
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+  return arr.length ? arr : undefined
 }

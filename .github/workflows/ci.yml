@@ -1,35 +1,50 @@
+# .github/workflows/ci.yml
 name: CI
 
 on:
   push:
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node (LTS) + pnpm cache
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
-      # Install pnpm globally FIRST so it's on PATH
-      - name: Install pnpm
-        run: npm i -g pnpm@9
-
-      # Prove pnpm is available
-      - name: Verify tools
+      - name: Enable Corepack & activate pnpm
         run: |
-          echo "PATH=$PATH"
-          which node
-          node -v
-          which pnpm
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
           pnpm -v
 
-      # If your project lives in apps/web, uncomment the working-directory:
-      - name: Install deps
-        # working-directory: apps/web
-        run: pnpm install --no-frozen-lockfile
+      - name: Install deps (frozen)
+        env:
+          CI: 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Dedupe check
+        run: pnpm dedupe --check
+
+      - name: Lint
+        run: pnpm -w lint
+
+      - name: Typecheck
+        run: pnpm -w typecheck
+
+      - name: Tests
+        run: pnpm -w test
+
+      - name: Security audit (OSV)
+        run: pnpm -w audit

@@ -13,12 +13,11 @@
       "skipFiles": ["<node_internals>/**"]
     },
     {
-      "type": "pwa-chrome",
+      "type": "chrome",
       "request": "launch",
       "name": "Web: Vite dev",
       "url": "http://localhost:5173",
-      "webRoot": "${workspaceFolder}/apps/web",
-      "preLaunchTask": "web:dev"
+      "webRoot": "${workspaceFolder}/apps/web"
     }
   ],
   "compounds": [

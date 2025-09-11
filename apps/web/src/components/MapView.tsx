@@ -1,42 +1,48 @@
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api'
 import { useCallback, useMemo, useRef } from 'react'
-import { GoogleMap, Marker } from '@react-google-maps/api'
-import type { DealToday } from '@/types'
-import { useGoogleMaps } from '@/map/google'
-import { darkMapStyle } from '@/map/styles'
-import { useMapCtx } from '@/map/context'
+import type { DealToday } from '../types'
 
 export type BBox = { south: number; west: number; north: number; east: number }
 
-export default function MapView({
-  deals,
-  selectedId,
-  onSelect,
-  onBoundsChange,
-}: {
+type Props = {
   deals: DealToday[]
+  onBoundsChange: (bbox: BBox) => void
   selectedId?: number
   onSelect?: (id: number) => void
-  onBoundsChange: (bbox: BBox) => void
-}) {
-  const mapRef = useRef<google.maps.Map | null>(null)
-  const { setMap } = useMapCtx()
+}
 
-  // ✅ load maps via shared loader
-  const { isLoaded, loadError } = useGoogleMaps()
+const mapOptions: google.maps.MapOptions = {
+  disableDefaultUI: true,
+  clickableIcons: false,
+  gestureHandling: 'greedy',
+}
 
-  // Default center → use first deal or fallback (Toronto)
-  const center = useMemo<[number, number]>(() => {
-    if (deals.length) return [deals[0].lat, deals[0].lng]
-    return [43.6532, -79.3832]
+export default function MapView({
+  deals,
+  onBoundsChange,
+  selectedId,
+  onSelect,
+}: Props) {
+  const center = useMemo<google.maps.LatLngLiteral>(() => {
+    if (deals.length) return { lat: deals[0].lat, lng: deals[0].lng }
+    return { lat: 43.65, lng: -79.38 } // Toronto fallback
   }, [deals])
 
-  const onLoad = useCallback(
-    (map: google.maps.Map) => {
-      mapRef.current = map
-      setMap(map) // share globally via context
-    },
-    [setMap]
-  )
+  const { isLoaded } = useJsApiLoader({
+    id: 'gmaps',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY!,
+    libraries: ['places'],
+  })
+
+  const mapRef = useRef<google.maps.Map | null>(null)
+
+  const handleLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map
+  }, [])
+
+  const handleUnmount = useCallback(() => {
+    mapRef.current = null
+  }, [])
 
   const handleIdle = useCallback(() => {
     const map = mapRef.current
@@ -53,42 +59,34 @@ export default function MapView({
     })
   }, [onBoundsChange])
 
-  if (loadError) {
-    return (
-      <div className="h-[70vh] w-full card text-red-600">
-        Failed to load Google Maps.
-      </div>
-    )
-  }
-  if (!isLoaded) {
-    return <div className="h-[70vh] w-full card">Loading map…</div>
-  }
+  if (!isLoaded) return <div className="h-[65vh] w-full card">Loading map…</div>
 
   return (
-    <div className="h-[70vh] w-full rounded-2xl overflow-hidden shadow">
+    <div className="h-[65vh] w-full rounded-2xl overflow-hidden shadow">
       <GoogleMap
-        onLoad={onLoad}
-        onIdle={handleIdle}
-        center={{ lat: center[0], lng: center[1] }}
+        mapContainerStyle={{ width: '100%', height: '100%' }}
+        center={center}
         zoom={13}
-        mapContainerClassName="h-full w-full"
-        options={{
-          styles: darkMapStyle, // high-contrast theme
-          clickableIcons: false,
-          fullscreenControl: false,
-          streetViewControl: false,
-          mapTypeControl: false,
-        }}
+        options={mapOptions}
+        onLoad={handleLoad}
+        onUnmount={handleUnmount}
+        onIdle={handleIdle}
       >
         {deals.map((d) => (
           <Marker
             key={d.deal_id}
             position={{ lat: d.lat, lng: d.lng }}
             onClick={() => onSelect?.(d.deal_id)}
-            zIndex={d.deal_id === selectedId ? 999 : undefined}
-            label={
-              d.deal_id === selectedId
-                ? { text: '★', color: 'white', fontSize: '14px' }
+            icon={
+              selectedId === d.deal_id
+                ? {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 10,
+                    fillColor: '#ff0000',
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: '#ffffff',
+                  }
                 : undefined
             }
           />
