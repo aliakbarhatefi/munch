@@ -22,15 +22,19 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      # 👇 This guarantees pnpm is on PATH for all later steps
+      # 🔑 Install pnpm on PATH for all later steps
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
+      - name: Verify tools
+        run: |
+          node -v
+          pnpm -v
+
       - name: Install deps (frozen)
-        env:
-          CI: 'true'
+        env: { CI: 'true' }
         run: pnpm install --frozen-lockfile
 
       - name: Dedupe check
