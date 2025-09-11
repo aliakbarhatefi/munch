@@ -5,17 +5,44 @@
       "label": "web:dev",
       "type": "shell",
       "command": "pnpm --filter ./apps/web dev",
+      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
-      "problemMatcher": {
-        "owner": "custom",
-        "fileLocation": "absolute",
-        "pattern": [{ "regexp": "." }],
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": "Local:",
-          "endsPattern": "ready in"
-        }
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
       }
+    },
+    {
+      "label": "api:dev",
+      "type": "shell",
+      "command": "pnpm --filter ./apps/api dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "typecheck",
+      "type": "shell",
+      "command": "pnpm -w typecheck",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": "$tsc",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "lint",
+      "type": "shell",
+      "command": "pnpm -w lint",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": "$eslint-stylish",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "dev:all",
+      "dependsOn": ["web:dev", "api:dev"],
+      "runOptions": { "reevaluateOnRerun": true }
     }
   ]
 }

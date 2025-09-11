@@ -1,12 +1,12 @@
-import { query } from '../db' // ✅ extensionless import works with TS+ESM
+import { query } from '../db'
 
-/** Maps JS getUTCDay() 0..6 (Sun=0) -> PostgreSQL-like 1..7 (Mon=1, Sun=7) */
+/** JS getUTCDay() 0..6 (Sun=0) -> 1..7 (Mon=1, Sun=7) */
 function toPgDowFromUTC(d: Date): number {
   const js = d.getUTCDay()
   return js === 0 ? 7 : js
 }
 
-/** Return "HH:MM" in UTC for comparing against TIME columns */
+/** "HH:MM" UTC for TIME comparisons */
 function hhmmUTC(d: Date): string {
   const h = String(d.getUTCHours()).padStart(2, '0')
   const m = String(d.getUTCMinutes()).padStart(2, '0')
@@ -24,8 +24,8 @@ type DealsQ = {
 export async function getDealsToday(qp: DealsQ) {
   const limit = Math.min(qp.limit ?? 50, 100)
   const now = qp.now ? new Date(String(qp.now)) : new Date()
-  const dow = toPgDowFromUTC(now) // 1..7
-  const t = hhmmUTC(now) // "HH:MM"
+  const dow = toPgDowFromUTC(now)
+  const t = hhmmUTC(now)
 
   const conds: string[] = [
     `d.is_active = true`,

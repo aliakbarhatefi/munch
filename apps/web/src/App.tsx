@@ -46,9 +46,12 @@ export default function App() {
   return (
     <AppShell
       header={
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Munch — Today's Deals</h1>
-        </header>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-bold">
+            Munch — Today’s Deals
+          </h1>
+          <span className="text-sm text-slate-600">Pickup only</span>
+        </div>
       }
       filters={<FilterBar value={filters} onChange={setFilters} />}
       map={
@@ -64,9 +67,8 @@ export default function App() {
           {loading && <div className="card">Loading deals...</div>}
           {error && <div className="card text-red-600">Error: {error}</div>}
           {!loading && !error && !deals.length && (
-            <div className="card text-sm opacity-70">
-              No deals found. Try zooming out, changing time, or removing
-              cuisine filters.
+            <div className="card text-sm text-slate-600">
+              No deals found. Try zooming out or clearing filters.
             </div>
           )}
           {!loading && !error && deals.length > 0 && (
