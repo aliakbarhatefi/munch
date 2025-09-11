@@ -12,7 +12,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,11 +22,11 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Enable Corepack & activate pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@9.0.0 --activate
-          pnpm -v
+      # 👇 This guarantees pnpm is on PATH for all later steps
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Install deps (frozen)
         env:
