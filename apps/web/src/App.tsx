@@ -5,9 +5,9 @@ import MapView, { type BBox } from './components/MapView'
 import DealList from './components/DealList'
 import { useDebounced } from './hooks/useDebounced'
 import type { DealToday } from './types'
+// import LoginBox from './components/LoginBox'; // enable when auth UI is ready
 
 const API = import.meta.env.VITE_API_URL ?? 'http://localhost:4000'
-
 type Filters = { city?: string; cuisine?: string[] }
 
 export default function App() {

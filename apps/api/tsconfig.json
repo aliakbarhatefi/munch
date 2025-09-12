@@ -1,14 +1,13 @@
-// apps/api/tsconfig.json
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "outDir": "dist",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"] // ✅ no hardcoded file paths
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
 }

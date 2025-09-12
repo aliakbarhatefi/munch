@@ -1,17 +1,19 @@
-import { Pool, QueryResultRow } from 'pg'
-import dotenv from 'dotenv'
-
-dotenv.config()
+import { Pool } from 'pg'
+import type { QueryResultRow } from 'pg'
+import { ENV } from './config.js'
 
 export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // ssl: { rejectUnauthorized: false } // enable if needed in cloud
+  connectionString: ENV.DATABASE_URL,
 })
 
+/**
+ * Thin wrapper that preserves the familiar `{ rows }` shape while keeping types.
+ * - T defaults to `QueryResultRow` but can be specified by callers.
+ */
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
-  params?: any[]
+  params?: ReadonlyArray<unknown>
 ): Promise<{ rows: T[] }> {
-  const res = await pool.query<T>(text, params)
-  return { rows: res.rows }
+  const res = await pool.query(text, params as never)
+  return { rows: res.rows as T[] }
 }

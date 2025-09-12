@@ -1,11 +1,25 @@
 {
   "name": "api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "Munch API (Fastify + TS)",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "dev:inspect": "node --inspect -r tsx/register src/index.ts",
+    "build": "tsc -p .",
+    "start": "node dist/index.js",
+    "prestart": "pnpm build",
+    "typecheck": "tsc -p . --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "migrate": "tsx ../../scripts/migrate.ts",
+    "test": "echo \"(no tests yet)\" && exit 0"
   },
   "keywords": [],
   "author": "",
@@ -13,21 +27,26 @@
   "dependencies": {
     "@fastify/cors": "^11.1.0",
     "@fastify/helmet": "^13.0.1",
+    "argon2": "^0.44.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.2.2",
     "fastify": "^5.6.0",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.16.3",
     "pino-pretty": "^13.1.1",
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/argon2": "^0.15.4",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.1",
     "@types/pg": "^8.15.5",
     "eslint": "^9.35.0",
     "prettier": "^3.6.2",
     "tsx": "^4.20.5",
-    "typescript": "~5.8.3"
-  },
-  "type": "module"
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.43.0"
+  }
 }

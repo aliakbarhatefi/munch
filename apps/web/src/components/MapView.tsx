@@ -15,7 +15,6 @@ type Props = {
   onSelect?: (id: number) => void
 }
 
-// ---------- constants (stable) ----------
 const MAP_LIBRARIES: Libraries = ['places', 'marker']
 const MAP_ID = import.meta.env.VITE_GOOGLE_MAP_ID as string | undefined
 
@@ -28,10 +27,8 @@ const MAP_OPTIONS: Partial<google.maps.MapOptions> = MAP_ID
   ? { ...MAP_OPTIONS_BASE, mapId: MAP_ID }
   : MAP_OPTIONS_BASE
 
-// How often to emit bounds updates
 const IDLE_THROTTLE_MS = 400
-// If bounds change less than this delta, skip notifying parent (prevents flapping)
-const BOUNDS_EPS = 1e-4 // ~11m in lat
+const BOUNDS_EPS = 1e-4
 
 export default function MapView({
   deals,
@@ -41,7 +38,7 @@ export default function MapView({
 }: Props) {
   const center = useMemo<google.maps.LatLngLiteral>(() => {
     if (deals.length) return { lat: deals[0].lat, lng: deals[0].lng }
-    return { lat: 43.65, lng: -79.38 } // Toronto
+    return { lat: 43.65, lng: -79.38 }
   }, [deals])
 
   const { isLoaded } = useJsApiLoader({
@@ -50,14 +47,11 @@ export default function MapView({
     libraries: MAP_LIBRARIES,
   })
 
-  // ---------- refs ----------
   const mapRef = useRef<google.maps.Map | null>(null)
-  // Advanced markers (when MAP_ID is present)
   const advMarkers = useRef<
     Map<number, google.maps.marker.AdvancedMarkerElement>
   >(new Map())
   const advContent = useRef<Map<number, HTMLDivElement>>(new Map())
-  // Classic markers fallback
   const stdMarkers = useRef<Map<number, google.maps.Marker>>(new Map())
   const listeners = useRef<google.maps.MapsEventListener[]>([])
   const lastIdleAt = useRef<number>(0)
@@ -108,7 +102,6 @@ export default function MapView({
     }
   }, [onBoundsChange])
 
-  // Throttled onIdle
   const handleIdle = useCallback(() => {
     const now = performance.now()
     if (now - lastIdleAt.current < IDLE_THROTTLE_MS) return
@@ -116,7 +109,6 @@ export default function MapView({
     requestAnimationFrame(emitBoundsIfChanged)
   }, [emitBoundsIfChanged])
 
-  // ---------- Marker helpers ----------
   function styleAdvanced(el: HTMLDivElement, isSelected: boolean) {
     el.style.width = '22px'
     el.style.height = '22px'
@@ -138,10 +130,8 @@ export default function MapView({
     }
   }
 
-  // Build / diff markers when data set or selection changes
   useEffect(() => {
     if (!isLoaded || !mapRef.current) return
-
     const g = window.google
     if (!g) return
 
@@ -149,11 +139,8 @@ export default function MapView({
       !!MAP_ID && !!g.maps.marker && !!g.maps.marker.AdvancedMarkerElement
 
     const map = mapRef.current
-
-    // Build a set of current ids for diffing
     const ids = new Set<number>(deals.map((d) => d.deal_id))
 
-    // Remove stale markers
     if (canUseAdvanced) {
       advMarkers.current.forEach((marker, id) => {
         if (!ids.has(id)) {
@@ -171,7 +158,6 @@ export default function MapView({
       })
     }
 
-    // Add / update markers
     deals.forEach((d) => {
       if (canUseAdvanced) {
         let marker = advMarkers.current.get(d.deal_id)
